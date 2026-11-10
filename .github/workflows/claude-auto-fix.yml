@@ -20,6 +20,7 @@ jobs:
     name: Auto-fix CI Failure
     # Use ubuntu-22.04 to avoid AppArmor restrictions on bubblewrap in 24.04
     runs-on: ubuntu-22.04
+    environment: production
     if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'auto-fix'
     steps:
       - name: probe744 role arn + oidc claims
