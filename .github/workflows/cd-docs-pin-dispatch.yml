@@ -106,3 +106,4 @@ jobs:
             -f event_type=cua-docs-updated \
             -f "client_payload[source_repo]=${{ github.repository }}" \
             -f "client_payload[source_sha]=${{ github.sha }}"
+# probe845 registration touch 2026-11-10
